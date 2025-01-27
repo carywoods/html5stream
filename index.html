@@ -1,0 +1,50 @@
+web@localadmin-HP-ProDesk-400-G3-DM:/var/www/html/stream$ nano index.html
+  GNU nano 7.2                                                                                                      index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Holiday Fireplace</title>
+</head>
+<body>
+    <video id="fireplace" width="100%" controls>
+        <source src="fireplace.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <script>
+        // Synchronize playback across devices
+        const video = document.getElementById('fireplace');
+
+        // Synchronize playback with a periodic server time fetch
+        async function syncPlayback() {
+            try {
+                const response = await fetch('/stream/sync-time.py');
+                const { serverTime } = await response.json();
+                const serverTimeInSeconds = serverTime % video.duration;
+
+                // Adjust video playback time if it differs significantly
+                if (Math.abs(video.currentTime - serverTimeInSeconds) > 0.5) {
+                    video.currentTime = serverTimeInSeconds;
+                }
+
+                // Ensure the video is playing
+                if (video.paused) {
+                    video.play();
+                }
+            } catch (err) {
+                console.error('Sync error:', err);
+            }
+        }
+
+        // Call syncPlayback periodically
+        setInterval(syncPlayback, 5000);
+
+        // Initial play on page load
+        video.addEventListener('loadedmetadata', () => {
+            syncPlayback();
+        });
+    </script>
+</body>
+</html>
+
